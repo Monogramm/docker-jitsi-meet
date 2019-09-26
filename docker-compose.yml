@@ -20,6 +20,7 @@ services:
             - JVB_ENABLE_STUN_TURN
             - JVB_ENABLE_P2P_STUN_TURN
             - DISABLE_HTTPS
+            - DISABLE_P2P
             - JICOFO_AUTH_USER
             - LETSENCRYPT_DOMAIN
             - LETSENCRYPT_EMAIL
