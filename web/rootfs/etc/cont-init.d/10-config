@@ -85,6 +85,12 @@ if [[ ! -f /config/config.js ]]; then
              /config/config.js
     fi
 
+    if [[ $START_AUDIO_ONLY -eq 1 || "$START_AUDIO_ONLY" == "true" ]]; then
+        sed -i \
+             -e "s#// startAudioOnly:.*,#startAudioOnly: true,#" \
+             /config/config.js
+    fi
+
     if [[ $JVB_ENABLE_STUN_TURN -eq 1 || "$JVB_ENABLE_STUN_TURN" == "true" ]]; then
         sed -i \
              -e "s#// useStunTurn:.*, //jvb#useStunTurn: true, //jvb#" \
@@ -104,7 +110,6 @@ if [[ ! -f /config/config.js ]]; then
     else
         sed -i \
              -e "s#enabled: .*, //p2p#enabled: true, //p2p#" \
-             /config/config.js
     fi
 fi
 
