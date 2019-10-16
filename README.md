@@ -274,6 +274,7 @@ Variable | Description | Default value
 `DISABLE_HTTPS` | Disable HTTPS, this can be useful if TLS connections are going to be handled outside of this setup | 1
 `ENABLE_HTTP_REDIRECT` | Redirects HTTP traffic to HTTPS | 1
 `LOG_LEVEL` | Controls which logs are output from prosody and associated modules | info
+`START_AUDIO_ONLY` | Disable video when starting conference | none
 
 ### Running behind NAT or on a LAN environment
 
