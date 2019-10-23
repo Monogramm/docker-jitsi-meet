@@ -110,6 +110,7 @@ if [[ ! -f /config/config.js ]]; then
     else
         sed -i \
              -e "s#enabled: .*, //p2p#enabled: true, //p2p#" \
+             /config/config.js
     fi
 fi
 
