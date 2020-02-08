@@ -29,7 +29,10 @@ This repository contains the necessary tools to run a Jitsi Meet stack on [Docke
 In order to quickly run Jitsi Meet on a machine running Docker and Docker Compose,
 follow these steps:
 
+* Clone this repository to your own computer.
+  * `git clone https://github.com/jitsi/docker-jitsi-meet && cd docker-jitsi-meet`
 * Create a ``.env`` file by copying and adjusting ``env.example``.
+  * `cp env.example .env`
 * Run ``docker-compose up -d``.
 * Access the web UI at ``https://localhost:8443`` (or ``http://localhost:8000`` for HTTP, or
   a different port, in case you edited the compose file).
@@ -40,6 +43,10 @@ and then run Docker Compose as follows: ``docker-compose -f docker-compose.yml -
 If you want to enable document sharing via [Etherpad], configure it and run Docker Compose as
 follows: ``docker-compose -f docker-compose.yml -f etherpad.yml up``
 
+If you want to use jibri too, first configure host as described in JItsi BRoadcasting Infrastructure configuration section
+and then run Docker Compose as follows: ``docker-compose -f docker-compose.yml -f jibri.yml up -d``
+or to use jigasi too: ``docker-compose -f docker-compose.yml -f jigasi.yml -f jibri.yml up -d``
+
 ## Architecture
 
 A Jitsi Meet installation can be broken down into the following components:
@@ -49,6 +56,7 @@ A Jitsi Meet installation can be broken down into the following components:
 * A conference focus component
 * A video router (could be more than one)
 * A SIP gateway for audio calls
+* A Broadcasting Infrastructure for recording or streaming a conference.
 
 ![](resources/docker-jitsi-meet.png)
 
@@ -67,6 +75,7 @@ several container images are provided.
 * **jvb**: [Jitsi Videobridge], the video router.
 * **jigasi**: [Jigasi], the SIP (audio only) gateway.
 * **etherpad**: [Etherpad], shared document editing addon.
+* **jibri**: [Jibri], the brooadcasting infrastructure.
 
 ### Design considerations
 
@@ -124,6 +133,111 @@ Variable | Description | Example
 `JIGASI_SIP_PORT` | SIP server port | 5060
 `JIGASI_SIP_TRANSPORT` | SIP transport | UDP
 
+### JItsi BRoadcasting Infrastructure configuration
+
+Before running Jibri, you need to setup an ALSA loopback device on the host. This **will not**
+work on a non-Linux host.
+
+For CentOS 7, the module is already compiled with the kernel, so just run:
+
+```
+# configure 5 capture/playback interfaces
+echo "options snd-aloop enable=1,1,1,1,1 index=0,1,2,3,4" > /etc/modprobe.d/alsa-loopback.conf
+# setup autoload the module
+echo "snd_aloop" > /etc/modules-load.d/snd_aloop.conf
+# load the module
+modprobe snd-aloop
+# check that the module is loaded
+lsmod | grep snd_aloop
+```
+
+For Ubuntu:
+
+```
+# install the module
+apt update && apt install linux-image-extra-virtual
+# configure 5 capture/playback interfaces
+echo "options snd-aloop enable=1,1,1,1,1 index=0,1,2,3,4" > /etc/modprobe.d/alsa-loopback.conf
+# setup autoload the module
+echo "snd-aloop" >> /etc/modules
+# check that the module is loaded
+lsmod | grep snd_aloop
+```
+
+NOTE: if you are running on AWS you may need to reboot your machine to ue the generic kernel instead
+of the "aws" kernel.
+
+If you want to enable Jibri these options are required:
+
+Variable | Description | Example
+--- | --- | ---
+`ENABLE_RECORDING` | Enable recording conference to local disk | 1
+
+Extended Jibri configuration:
+
+Variable | Description | Example
+--- | --- | ---
+`JIBRI_RECORDER_USER` | Internal recorder user for Jibri client connections | recorder
+`JIBRI_RECORDER_PASSWORD` | Internal recorder password for Jibri client connections | passw0rd
+`JIBRI_RECORDING_DIR` | Directory for recordings inside Jibri container | /config/recordings
+`JIBRI_FINALIZE_RECORDING_SCRIPT_PATH` | The finalizing script. Will run after recording is complete | /config/finalize.sh
+`JIBRI_XMPP_USER` | Internal user for Jibri client connections. | jibri
+`JIBRI_RECORDER_PASSWORD` | Internal user for Jibri client connections | passw0rd
+`JIBRI_STRIP_DOMAIN_JID` | Prefix domain for strip inside Jibri (please see env.example for details) | muc
+`JIBRI_BREWERY_MUC` | MUC name for the Jibri pool | jibribrewery
+`JIBRI_PENDING_TIMEOUT` | MUC connection timeout | 90
+`JIBRI_LOGS_DIR` | Directory for logs inside Jibri container | /config/logs
+
+For using multiple Jibri instances, you have to select different loopback interfces for each instance manually.
+
+<details>
+  <summary>Set interface you can in file `/home/jibri/.asoundrc` inside a docker container.</summary>
+
+  Default the first instance has:
+
+  ```
+  ...
+  slave.pcm "hw:Loopback,0,0"
+  ...
+  slave.pcm "hw:Loopback,0,1"
+  ...
+  slave.pcm "hw:Loopback,1,1"
+  ...
+  slave.pcm "hw:Loopback,1,0"
+  ...
+  ```
+
+  For setup the second instance, run container with changed `/home/jibri/.asoundrc`:
+
+  ```
+  ...
+  slave.pcm "hw:Loopback_1,0,0"
+  ...
+  slave.pcm "hw:Loopback_1,0,1"
+  ...
+  slave.pcm "hw:Loopback_1,1,1"
+  ...
+  slave.pcm "hw:Loopback_1,1,0"
+  ...
+  ```
+
+  Also you can use numbering id for set loopback interface. The third instance will have `.asoundrc` that looks like:
+
+  ```
+  ...
+  slave.pcm "hw:2,0,0"
+  ...
+  slave.pcm "hw:2,0,1"
+  ...
+  slave.pcm "hw:2,1,1"
+  ...
+  slave.pcm "hw:2,1,0"
+  ...
+
+  ```
+
+</details>
+
 ### Authentication
 
 Authentication can be controlled with the environment variables below. If guest
@@ -150,7 +264,7 @@ In order to do that, first execute a shell in the corresponding container:
 
 Once in the container, run the following command to create a user:
 
-``prosodyctl --config /config/prosody.cfg.lua register username@meet.jitsi``
+``prosodyctl --config /config/prosody.cfg.lua register username meet.jitsi passsword``
 
 The command then asks for a password interactively.
 
@@ -171,8 +285,8 @@ Variable | Description | Example
 `LDAP_USE_TLS` | Enable LDAP TLS | 1
 `LDAP_TLS_CIPHERS` | Set TLS ciphers list to allow | SECURE256:SECURE128
 `LDAP_TLS_CHECK_PEER` | Require and verify LDAP server certificate | 1
-`LDAP_TLS_CACERT_FILE` | Path to CA cert file. Used when server sertificate verify is enabled | /etc/ssl/certs/ca-certificates.crt
-`LDAP_TLS_CACERT_DIR` | Path to CA certs directory. Used when server sertificate verify is enabled. | /etc/ssl/certs
+`LDAP_TLS_CACERT_FILE` | Path to CA cert file. Used when server certificate verify is enabled | /etc/ssl/certs/ca-certificates.crt
+`LDAP_TLS_CACERT_DIR` | Path to CA certs directory. Used when server certificate verify is enabled. | /etc/ssl/certs
 
 #### Authentication using JWT tokens
 
@@ -243,10 +357,11 @@ Variable | Description | Default value
 `XMPP_MUC_DOMAIN` | XMPP domain for the MUC | muc.meet.jitsi
 `XMPP_INTERNAL_MUC_DOMAIN` | XMPP domain for the internal MUC | internal-muc.meet.jitsi
 `XMPP_GUEST_DOMAIN` | XMPP domain for unauthenticated users | guest.meet.jitsi
-`XMPP_MODULES` | Custom Prosody modules for XMPP_DOMAIN (comma separated) | mod_info,mod_alert
-`XMPP_MUC_MODULES` | Custom Prosody modules for MUC component (comma separated) | mod_info,mod_alert
-`XMPP_INTERNAL_MUC_MODULES` | Custom Prosody modules for internal MUC component (comma separated) | mod_info,mod_alert
-`GLOBAL_MODULES` | Custom prosodule modules to load in global configuration (comma separated) | mod_statistics,mod_alert
+`XMPP_RECORDER_DOMAIN` | Domain for the jibri recorder | recorder.meet.jitsi
+`XMPP_MODULES` | Custom Prosody modules for XMPP_DOMAIN (comma separated) | info,alert
+`XMPP_MUC_MODULES` | Custom Prosody modules for MUC component (comma separated) | info,alert
+`XMPP_INTERNAL_MUC_MODULES` | Custom Prosody modules for internal MUC component (comma separated) | info,alert
+`GLOBAL_MODULES` | Custom prosodule modules to load in global configuration (comma separated) | statistics,alert
 `GLOBAL_CONFIG` | Custom configuration string with escaped newlines | foo = bar;\nkey = val;
 `JICOFO_COMPONENT_SECRET` | XMPP component password for Jicofo | s3cr37
 `JICOFO_AUTH_USER` | XMPP user for Jicofo client connections | focus
@@ -292,10 +407,7 @@ option.
 ## TODO
 
 * Support container replicas (where applicable).
-* Docker Swarm mode.
-* More services:
-  * Jibri.
-  * TURN server.
+* TURN server.
 
 [Jitsi]: https://jitsi.org/
 [Jitsi Meet]: https://jitsi.org/jitsi-meet/
@@ -312,4 +424,4 @@ option.
 [STUN]: https://en.wikipedia.org/wiki/STUN
 [jwt.io]: https://jwt.io/#debugger-io
 [Etherpad]: https://github.com/ether/etherpad-lite
-
+[Jibri]: https://github.com/jitsi/jibri
