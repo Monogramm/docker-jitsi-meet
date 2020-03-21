@@ -31,11 +31,14 @@ follow these steps:
 
 * Clone this repository to your own computer.
   * `git clone https://github.com/jitsi/docker-jitsi-meet && cd docker-jitsi-meet`
-* Create a ``.env`` file by copying and adjusting ``env.example``.
+* Create a ``.env`` file by copying and adjusting ``env.example``, and create required `CONFIG` directories
   * `cp env.example .env`
+  * `mkdir -p ~/.jitsi-meet-cfg/{web/letsencrypt,transcripts,prosody,jicofo,jvb}`
 * Run ``docker-compose up -d``.
-* Access the web UI at ``https://localhost:8443`` (or ``http://localhost:8000`` for HTTP, or
-  a different port, in case you edited the compose file).
+* Access the web UI at [``https://localhost:8443``](https://localhost:8443) (or a different port, in case you edited the compose file).
+
+Note that HTTP (not HTTPS) is also available (on port 8000, by default), but that's e.g. for a reverse proxy setup;
+direct access via HTTP instead HTTPS leads to WebRTC errors such as _Failed to access your microphone/camera: Cannot use microphone/camera for an unknown reason. Cannot read property 'getUserMedia' of undefined_ or _navigator.mediaDevices is undefined_.
 
 If you want to use jigasi too, first configure your env file with SIP credentials
 and then run Docker Compose as follows: ``docker-compose -f docker-compose.yml -f jigasi.yml up``
@@ -63,6 +66,27 @@ A Jitsi Meet installation can be broken down into the following components:
 The diagram shows a typical deployment in a host running Docker. This project
 separates each of the components above into interlinked containers. To this end,
 several container images are provided.
+
+### External Ports
+
+The following external ports must be opened on a firweall:
+
+* 80/tcp for Web UI HTTP (really just to redirect, after uncommenting ENABLE_HTTP_REDIRECT=1 in .env)
+* 443/tcp for Web UI HTTPS
+* 4443/tcp for RTP media over TCP
+* 10000/udp for RTP media over UDP
+
+Also 20000-20050/udp for jigasi, in case you choose to deploy that to facilitate SIP acces.
+
+E.g. on a CentOS/Fedora server this would be done like this (without SIP access):
+
+```shell
+    $ sudo firewall-cmd --permanent --add-port=80/tcp
+    $ sudo firewall-cmd --permanent --add-port=443/tcp
+    $ sudo firewall-cmd --permanent --add-port=4443/tcp
+    $ sudo firewall-cmd --permanent --add-port=10000/udp
+    $ sudo firewall-cmd --reload
+```
 
 ### Images
 
@@ -164,7 +188,7 @@ echo "snd-aloop" >> /etc/modules
 lsmod | grep snd_aloop
 ```
 
-NOTE: if you are running on AWS you may need to reboot your machine to ue the generic kernel instead
+NOTE: if you are running on AWS you may need to reboot your machine to use the generic kernel instead
 of the "aws" kernel.
 
 If you want to enable Jibri these options are required:
@@ -287,6 +311,7 @@ Variable | Description | Example
 `LDAP_TLS_CHECK_PEER` | Require and verify LDAP server certificate | 1
 `LDAP_TLS_CACERT_FILE` | Path to CA cert file. Used when server certificate verify is enabled | /etc/ssl/certs/ca-certificates.crt
 `LDAP_TLS_CACERT_DIR` | Path to CA certs directory. Used when server certificate verify is enabled. | /etc/ssl/certs
+`LDAP_START_TLS` | Enable START_TLS, requires LDAPv3, URL must be ldap:// not ldaps:// | 0
 
 #### Authentication using JWT tokens
 
