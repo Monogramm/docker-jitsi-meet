@@ -4,6 +4,17 @@ services:
     # Etherpad: real-time collaborative document editing
     etherpad:
         image: jitsi/etherpad
+        expose:
+            - 9001
+        environment:
+            - TITLE=Video Chat
+            - FAVICON=favicon.ico
+            - SKIN_NAME=colibris
+            - IP=0.0.0.0
+            - PORT=9001
+            - SHOW_SETTINGS_IN_ADMIN_PAGE=true
+            - DB_TYPE=dirty
+            - DB_FILENAME=var/dirty.db
         networks:
             meet.jitsi:
                 aliases:
