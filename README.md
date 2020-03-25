@@ -20,7 +20,8 @@ This repository contains the necessary tools to run a Jitsi Meet stack on [Docke
 * [Configurations](#configuration)
   - [Advanced configuration](#advanced-configuration)
   - [Running on a LAN environment](#running-on-a-lan-environment)
-* [Limitations](#limitations)
+* [Build Instructions](#build-instructions)
+* [ToDo](#todo)
 
 <hr />
 
@@ -288,9 +289,9 @@ In order to do that, first execute a shell in the corresponding container:
 
 Once in the container, run the following command to create a user:
 
-``prosodyctl --config /config/prosody.cfg.lua register username meet.jitsi passsword``
+``prosodyctl --config /config/prosody.cfg.lua register TheDesiredUsername meet.jitsi TheDesiredPassword``
 
-The command then asks for a password interactively.
+Note that the commend produces no output.
 
 #### Authentication using LDAP
 
@@ -365,9 +366,14 @@ If you want to enable the Transcribing function, these options are required:
 Variable | Description | Example
 --- | --- | ---
 `ENABLE_TRANSCRIPTIONS` | Enable Jigasi transcription in a conference | 1
-`GOOGLE_APPLICATION_CREDENTIALS` | Credentials for connect to Cloud Google API from Jigasi. Path located inside the container | /config/key.json
+`GC_PROJECT_ID` | `project_id` from Google Cloud Credetials
+`GC_PRIVATE_KEY_ID` | `private_key_id` from Google Cloud Credetials
+`GC_PRIVATE_KEY` | `private_key` from Google Cloud Credetials
+`GC_CLIENT_EMAIL` | `client_email` from Google Cloud Credetials
+`GC_CLIENT_ID` | `client_id` from Google Cloud Credetials
+`GC_CLIENT_CERT_URL` | `client_x509_cert_url` from Google Cloud Credetials
 
-For setting `GOOGLE_APPLICATION_CREDENTIALS` please read https://cloud.google.com/text-to-speech/docs/quickstart-protocol section "Before you begin" from 1 to 5 paragraph.
+For setting the Google Cloud Credentials please read https://cloud.google.com/text-to-speech/docs/quickstart-protocol section "Before you begin" from 1 to 5 paragraph.
 
 ### Advanced configuration
 
@@ -424,10 +430,20 @@ Variable | Description | Default value
 If running in a LAN environment (as well as on the public Internet, via NAT) is a requirement,
 the ``DOCKER_HOST_ADDRESS`` should be set. This way, the Videobridge will advertise the IP address
 of the host running Docker instead of the internal IP address that Docker assigned it, thus making [ICE]
-succeed.
+succeed. If your users are coming in over the Internet (and not over LAN), this will likely be your public IP address. If this is not setup correctly, calls will crash when more than two users join a meeting.
 
 The public IP address is discovered via [STUN]. STUN servers can be specified with the ``JVB_STUN_SERVERS``
 option.
+
+## Build Instructions
+
+Building your own images allows you to edit the configuration files of each image individually, providing more customization for your deployment.
+
+The docker images can be built by running the `make` command in the main repository folder. If you need to overwrite existing images from the remote source, use `FORCE_REBUILD=1 make`.
+
+If you are on the unstable branch, build the images with `FORCE_REBUILD=1 JITSI_RELEASE=unstable make`.
+
+You are now able to run `docker-compose up` as usual.
 
 ## TODO
 
