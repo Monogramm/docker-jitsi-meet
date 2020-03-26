@@ -99,8 +99,9 @@ if [[ ! -f /config/config.js ]]; then
     fi
 
     if [[ ! -z "${ETHERPAD_URL_BASE}" && -z "$(grep -om1 'etherpad_base:' /config/config.js)" ]]; then
+        # Temp fix for https://github.com/jitsi/docker-jitsi-meet/issues/281
         sed -i \
-            -e "/enableWelcomePage/a\    etherpad_base: '/etherpad/p/'," \
+            -e "/enableWelcomePage/a\    etherpad_base: '${ETHERPAD_URL_BASE}/etherpad/p/'," \
             /config/config.js
     fi
 
