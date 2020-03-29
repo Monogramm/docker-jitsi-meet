@@ -19,7 +19,7 @@ This repository contains the necessary tools to run a Jitsi Meet stack on [Docke
   - [Design considerations](#design-considerations)
 * [Configurations](#configuration)
   - [Advanced configuration](#advanced-configuration)
-  - [Running on a LAN environment](#running-on-a-lan-environment)
+  - [Running behind NAT or on a LAN environment](#running-behind-nat-or-on-a-lan-environment)
 * [Build Instructions](#build-instructions)
 * [ToDo](#todo)
 
@@ -100,7 +100,7 @@ E.g. on a CentOS/Fedora server this would be done like this (without SIP access)
 * **jvb**: [Jitsi Videobridge], the video router.
 * **jigasi**: [Jigasi], the SIP (audio only) gateway.
 * **etherpad**: [Etherpad], shared document editing addon.
-* **jibri**: [Jibri], the brooadcasting infrastructure.
+* **jibri**: [Jibri], the broadcasting infrastructure.
 
 ### Design considerations
 
@@ -291,7 +291,7 @@ Once in the container, run the following command to create a user:
 
 ``prosodyctl --config /config/prosody.cfg.lua register TheDesiredUsername meet.jitsi TheDesiredPassword``
 
-Note that the commend produces no output.
+Note that the command produces no output.
 
 #### Authentication using LDAP
 

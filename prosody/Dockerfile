@@ -1,8 +1,13 @@
 ARG JITSI_REPO=jitsi
 FROM ${JITSI_REPO}/base
 
+ADD https://prosody.im/files/prosody-debian-packages.key /tmp/prosody.key
+
 RUN \
-    apt-dpkg-wrap apt-get update \
+    apt-key add /tmp/prosody.key \
+    && rm -f /tmp/prosody.key \
+    && echo "deb http://packages.prosody.im/debian stretch main" > /etc/apt/sources.list.d/prosody.list \
+    && apt-dpkg-wrap apt-get update \
     && apt-dpkg-wrap apt-get install -t stretch-backports -y \
       prosody \
       liblua5.2-dev \
@@ -12,6 +17,7 @@ RUN \
       libssl1.0-dev \
       lua-basexx \
       lua-ldap \
+      lua-sec \
       luarocks \
       git \
       gcc \
@@ -32,14 +38,14 @@ RUN \
 
 RUN \
     apt-dpkg-wrap apt-get update \
-    && apt-dpkg-wrap apt-get -d install -y jitsi-meet-tokens \
-    && dpkg -x /var/cache/apt/archives/jitsi-meet-tokens*.deb /tmp \
-    && mv /tmp/usr/share/jitsi-meet/prosody-plugins /prosody-plugins \
+    && apt-dpkg-wrap apt-get -d install -y jitsi-meet-prosody \
+    && dpkg -x /var/cache/apt/archives/jitsi-meet-prosody*.deb /tmp/pkg \
+    && mv /tmp/pkg/usr/share/jitsi-meet/prosody-plugins /prosody-plugins \
     && wget \
       -O /usr/lib/prosody/modules/mod_turncredentials.lua \
       https://hg.prosody.im/prosody-modules/raw-file/tip/mod_turncredentials/mod_turncredentials.lua \
     && apt-cleanup \
-    && rm -rf /tmp/usr /var/cache/apt
+    && rm -rf /tmp/pkg /var/cache/apt
 
 RUN \
     sed -i s/hook/hook_global/g /prosody-plugins/mod_auth_token.lua \
