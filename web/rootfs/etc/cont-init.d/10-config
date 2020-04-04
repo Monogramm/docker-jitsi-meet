@@ -90,9 +90,9 @@ if [[ ! -f /config/config.js ]]; then
             /config/config.js
     fi
 
-    if [[ ! -z "${ETHERPAD_URL_BASE}" && -z "$(grep -om1 'etherpad_base:' /config/config.js)" ]]; then
+    if [[ ! -z "${ETHERPAD_URL_BASE}" || ! -z "${ETHERPAD_PUBLIC_URL}" ]] && [[ -z "$(grep -om1 'etherpad_base:' /config/config.js)" ]]; then
         sed -i \
-            -e "/enableWelcomePage/a\    etherpad_base: '/etherpad/p/'," \
+            -e "/enableWelcomePage/a\    etherpad_base: '${ETHERPAD_PUBLIC_URL:-/etherpad}/p/'," \
             /config/config.js
     fi
 
