@@ -358,6 +358,7 @@ Here are the required options:
 Variable | Description | Example
 --- | --- | ---
 `ETHERPAD_URL_BASE` | Set etherpad-lite URL | http://etherpad.meet.jitsi:9001
+`ETHERPAD_PUBLIC_URL` | Set etherpad-lite public URL | https://meet.example.com/etherpad
 
 ### Transcription configuration
 
