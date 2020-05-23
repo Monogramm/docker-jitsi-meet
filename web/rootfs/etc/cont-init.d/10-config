@@ -91,9 +91,9 @@ if [[ ! -f /config/config.js ]]; then
              /config/config.js
     fi
 
-    if [[ ! -z "$JVB_STUN_SERVER" ]]; then
+    if [[ ! -z "$JVB_STUN_SERVERS" ]]; then
         sed -i \
-             -e "s#urls: 'stun:.*' }#urls: 'stun:${JVB_STUN_SERVER}' }#" \
+             -e "s#urls: 'stun:.*' }#urls: 'stun:${JVB_STUN_SERVERS}' }#" \
              /config/config.js
     fi
 fi

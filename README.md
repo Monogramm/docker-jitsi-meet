@@ -260,7 +260,6 @@ Variable | Description | Default value
 `JVB_BREWERY_MUC` | MUC name for the JVB pool | jvbbrewery
 `JVB_ENABLE_APIS` | Comma separated list of JVB APIs to enable | none
 `JVB_ENABLE_STUN_TURN` | Enable STUN/TURN for peer-to-peer / JVB connections | 1
-`JVB_STUN_SERVER` | STUN server for peer-to-peer connections | 1
 `JIGASI_XMPP_USER` | XMPP user for Jigasi MUC client connections | jigasi
 `JIGASI_XMPP_PASSWORD` | XMPP password for Jigasi MUC client connections | passw0rd
 `JIGASI_BREWERY_MUC` | MUC name for the Jigasi pool | jigasibrewery
