@@ -91,9 +91,9 @@ if [[ ! -f /config/config.js ]]; then
              /config/config.js
     fi
 
-    if [[ $JVB_ENABLE_P2P_STUN_TURN -eq 1 || "$JVB_ENABLE_P2P_STUN_TURN" == "true" ]]; then
+    if [[ ! -z "$JVB_STUN_SERVER" ]]; then
         sed -i \
-             -e "s#// useStunTurn:.*, //p2p#useStunTurn: true, //p2p#" \
+             -e "s#urls: 'stun:.*' }#urls: 'stun:${JVB_STUN_SERVER}' }#" \
              /config/config.js
     fi
 fi
